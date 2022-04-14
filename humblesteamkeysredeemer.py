@@ -12,6 +12,8 @@ import json
 import sys
 import webbrowser
 import os
+import httpx
+import asyncio
 
 sys.stderr = open('error.log','a')
 
@@ -40,7 +42,6 @@ headers = {
     "Content-Type": "application/x-www-form-urlencoded",
     "Accept": "application/json, text/javascript, */*; q=0.01",
 }
-
 
 def find_dict_keys(node, kv, parent=False):
     if isinstance(node, list):
@@ -734,7 +735,8 @@ def print_main_header():
     print("--------------------------------------")
     
 # Create a consistent session for Humble API use
-humble_session = cloudscraper.CloudScraper()
+#humble_session = cloudscraper.CloudScraper()
+humble_session = httpx.Client(http2=True)
 humble_login(humble_session)
 print("Successfully signed in on Humble.")
 
@@ -742,14 +744,15 @@ orders = humble_session.get(HUMBLE_ORDERS_API).json()
 print(f"Getting {len(orders)} order details, please wait")
 
 order_details = []
-with FuturesSession(session=humble_session,max_workers=30) as retriever:
-    order_futures = [
-        retriever.get(f"{HUMBLE_ORDER_DETAILS_API}{order['gamekey']}?all_tpkds=true")
-        for order in orders
-    ]
-    for future in as_completed(order_futures):
-        resp = future.result()
-        order_details.append(resp.json())
+
+async def hbrunner(orders):
+    async with httpx.AsyncClient() as client:
+        for order in orders:
+            game = f"{HUMBLE_ORDER_DETAILS_API}{order['gamekey']}?all_tpkds=true"
+            resp = await client.get(game)
+            order_details.append(resp.json())
+
+asyncio.run(hbrunner(orders))
 
 desired_mode = prompt_mode(order_details,humble_session)
 if(desired_mode == "2"):
