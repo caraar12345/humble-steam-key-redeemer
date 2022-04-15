@@ -26,6 +26,8 @@ class Logger(object):
         # you might want to specify some extra behavior here.
         pass    
 
+sys.stderr = Logger()
+
 # Humble endpoints
 HUMBLE_LOGIN_PAGE = "https://www.humblebundle.com/login"
 HUMBLE_KEYS_PAGE = "https://www.humblebundle.com/home/library"
