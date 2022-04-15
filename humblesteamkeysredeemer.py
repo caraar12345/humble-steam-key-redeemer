@@ -10,7 +10,6 @@ import sys
 import webbrowser
 import os
 import httpx
-import asyncio
 
 class Logger(object):
     def __init__(self):
@@ -76,7 +75,7 @@ Which key export mode would you like to use?
 [2] Export keys
 [3] Humble Choice chooser
 """
-def prompt_mode(order_details,humble_session):
+def prompt_mode():
     mode = None
     while mode not in ["1","2","3"]:
         print(MODE_PROMPT)
@@ -736,6 +735,13 @@ def humble_chooser_mode(humble_session,order_details):
             chosen_keys = list(find_dict_keys(updated_monthlies,"steam_app_id",True))
             redeem_steam_keys(humble_session,chosen_keys)
 
+def get_order_details(humble_session):
+    orders = humble_session.get(HUMBLE_ORDERS_API).json()
+    print(f"Getting {len(orders)} order details, please wait")
+    order_details = [humble_session.get(f"{HUMBLE_ORDER_DETAILS_API}{order['gamekey']}").json() for order in orders]
+    return order_details
+
+
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
     print_main_header()
@@ -751,13 +757,20 @@ humble_session = httpx.Client(http2=True)
 humble_login(humble_session)
 print("Successfully signed in on Humble.")
 
-orders = humble_session.get(HUMBLE_ORDERS_API).json()
-print(f"Getting {len(orders)} order details, please wait")
-order_details = [humble_session.get(f"{HUMBLE_ORDER_DETAILS_API}{order['gamekey']}").json() for order in orders]
+if os.environ.get("USE_CACHED_ORDER_DETAILS") == "true":
+    with open("order_details.json","r") as f:
+        order_details = json.load(f)
 
-print(order_details)
+elif os.environ.get("CACHE_ORDER_DETAILS") == "true":
+    order_details = get_order_details(humble_session)
+    with open("order_details.json","w") as f:
+        json.dump(order_details,f)
 
-desired_mode = prompt_mode(order_details,humble_session)
+else:
+    print("Not caching order details or using cached order details.")
+    order_details = get_order_details(humble_session)
+
+desired_mode = prompt_mode()
 if(desired_mode == "2"):
     export_mode(humble_session,order_details)
     sys.exit()

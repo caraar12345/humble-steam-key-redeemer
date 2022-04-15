@@ -8,9 +8,7 @@ steam = "*"
 fuzzywuzzy = "*"
 requests = "*"
 requests-futures = "*"
-cloudscraper = "*"
 httpx = {extras = ["http2"], version = "*"}
-asyncio = "*"
 python-levenshtein = "*"
 
 [dev-packages]

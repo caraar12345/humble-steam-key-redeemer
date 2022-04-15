@@ -153,3 +153,4 @@ dmypy.json
 .humblecookies
 humble_export*
 error.log
+order_details.json
