@@ -1,7 +1,4 @@
 import requests
-import cloudscraper
-from requests_futures.sessions import FuturesSession
-from concurrent.futures import as_completed
 from fuzzywuzzy import fuzz
 import steam.webauth as wa
 import time
@@ -15,7 +12,20 @@ import os
 import httpx
 import asyncio
 
-sys.stderr = open('error.log','a')
+class Logger(object):
+    def __init__(self):
+        self.terminal = sys.stderr
+        self.log = open("error.log", "a")
+   
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)  
+
+    def flush(self):
+        # this flush method is needed for python 3 compatibility.
+        # this handles the flush command by doing nothing.
+        # you might want to specify some extra behavior here.
+        pass    
 
 # Humble endpoints
 HUMBLE_LOGIN_PAGE = "https://www.humblebundle.com/login"
@@ -737,22 +747,15 @@ def print_main_header():
 # Create a consistent session for Humble API use
 #humble_session = cloudscraper.CloudScraper()
 humble_session = httpx.Client(http2=True)
+
 humble_login(humble_session)
 print("Successfully signed in on Humble.")
 
 orders = humble_session.get(HUMBLE_ORDERS_API).json()
 print(f"Getting {len(orders)} order details, please wait")
+order_details = [humble_session.get(f"{HUMBLE_ORDER_DETAILS_API}{order['gamekey']}").json() for order in orders]
 
-order_details = []
-
-async def hbrunner(orders):
-    async with httpx.AsyncClient() as client:
-        for order in orders:
-            game = f"{HUMBLE_ORDER_DETAILS_API}{order['gamekey']}?all_tpkds=true"
-            resp = await client.get(game)
-            order_details.append(resp.json())
-
-asyncio.run(hbrunner(orders))
+print(order_details)
 
 desired_mode = prompt_mode(order_details,humble_session)
 if(desired_mode == "2"):
@@ -767,7 +770,6 @@ cls()
 unrevealed_keys = []
 revealed_keys = []
 steam_keys = list(find_dict_keys(order_details,"steam_app_id",True))
-
 filters = ["errored.csv", "already_owned.csv", "redeemed.csv"]
 original_length = len(steam_keys)
 for filter_file in filters:

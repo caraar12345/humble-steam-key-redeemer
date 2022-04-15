@@ -151,3 +151,5 @@ dmypy.json
 
 .idea/
 .humblecookies
+humble_export*
+error.log

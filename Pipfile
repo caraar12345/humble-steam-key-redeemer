@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+steam = "*"
+fuzzywuzzy = "*"
+requests = "*"
+requests-futures = "*"
+cloudscraper = "*"
+httpx = {extras = ["http2"], version = "*"}
+asyncio = "*"
+python-levenshtein = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
